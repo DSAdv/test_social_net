@@ -1,8 +1,10 @@
 import datetime
 
-from flask import jsonify
-from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity, jwt_refresh_token_required, \
-    jwt_required, get_raw_jwt
+from flask import jsonify, make_response
+from flask_jwt_extended import (
+    create_access_token, create_refresh_token, get_jwt_identity, jwt_refresh_token_required,
+    jwt_required, get_raw_jwt, set_access_cookies, set_refresh_cookies, unset_access_cookies, unset_refresh_cookies
+)
 from flask_restful import Resource
 from flask_restful.reqparse import RequestParser
 
@@ -35,11 +37,13 @@ class UserRegistration(Resource):
         try:
             access_token = create_access_token(identity=json_data['username'])
             refresh_token = create_refresh_token(identity=json_data['username'])
-
             user.save_to_db(save_time_for="login")
-            return {"access_token": access_token,
-                    "refresh_token": refresh_token,
-                    "message": f"{str(user)} successfully created"}, 201
+
+            response = jsonify({'register': True})
+            set_access_cookies(response, access_token)
+            set_refresh_cookies(response, refresh_token)
+
+            return response, 201
         except:
             return {"message": "Something went wrong"}, 500
 
@@ -47,21 +51,23 @@ class UserRegistration(Resource):
 class UserLogin(Resource):
     def post(self):
         json_data = _user_parser.parse_args()
-        username = json_data["username"]
+
+        username = json_data.get("username")
         current_user = UserModel.find_user_by_username(username)
 
         if not current_user:
             return {"message": f"User {username} doesn't exist"}
 
-        if current_user.check_password(json_data["password"]):
+        if current_user.check_password(json_data.get("password")):
             access_token = create_access_token(identity=username)
             refresh_token = create_refresh_token(identity=username)
 
+            response = jsonify({'login': True})
+            set_access_cookies(response, access_token)
+            set_refresh_cookies(response, refresh_token)
+
             current_user.save_to_db(save_time_for="login")
-            return {
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-            }, 200
+            return make_response(response, 200)
         else:
             return {"message": "Provided invalid credentials"}, 401
 
@@ -73,7 +79,10 @@ class UserLogoutAccess(Resource):
         try:
             revoked_token = RevokedTokenModel(jti = jti)
             revoked_token.add()
-            return {'message': 'Access token has been revoked'}
+
+            response = jsonify({"logout_access": True})
+            unset_access_cookies(response)
+            return make_response(response, 200)
         except:
             return {'message': 'Something went wrong'}, 500
 
@@ -85,7 +94,10 @@ class UserLogoutRefresh(Resource):
         try:
             revoked_token = RevokedTokenModel(jti = jti)
             revoked_token.add()
-            return {'message': 'Refresh token has been revoked'}
+
+            response = jsonify({"logout_refresh": True})
+            unset_refresh_cookies(response)
+            return make_response(response, 200)
         except:
             return {'message': 'Something went wrong'}, 500
 
@@ -93,15 +105,17 @@ class UserLogoutRefresh(Resource):
 class TokenRefresh(Resource):
     @jwt_refresh_token_required
     def post(self):
-        current_user_id = get_jwt_identity()
-        access_token = create_access_token(identity=current_user_id, fresh=False)
-        return {"access_token": access_token}, 200
+        current_user = get_jwt_identity()
+        access_token = create_access_token(identity=current_user, fresh=False)
+
+        response = jsonify({"refresh": True})
+        set_access_cookies(response, access_token)
+        return make_response(response, 200)
 
 
 @jwt.user_loader_callback_loader
 def user_loader_callback(identity):
     user = UserModel.find_user_by_username(username=identity)
-
     if not user:
         return None
 
