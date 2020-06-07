@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask-restful = "*"
+flask-jwt-extended = "*"
+flask-sqlalchemy = "*"
+passlib = "*"
+python-dotenv = "*"
+flask-login = "*"
+flask-migrate = "*"
+flask-script = "*"
+flask-marshmallow = "*"
+marshmallow = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.7"
