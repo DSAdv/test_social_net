@@ -29,6 +29,7 @@ def fetch_random_messages(count: int = 5):
 
     return messages[:count]
 
+
 def remove_tags(text):
     return re.compile(r'<[^>]+>').sub('', text)
 
