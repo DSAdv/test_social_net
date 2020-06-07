@@ -108,14 +108,13 @@ def main():
     settings = bot_conf[params.conf]
     logger.info(f"Used config '{params.conf}' for bots")
 
-    user_bots = [
-        UserBot(user_number=i,
-                max_posts_per_user=int(settings["max_posts_per_user"]),
-                max_likes_per_user=int(settings["max_likes_per_user"]))
-        for i in range(int(settings["number_of_users"]))
-    ]
+    for i in range(int(settings["number_of_users"])):
+        bot = UserBot(
+            user_number=i,
+            max_posts_per_user=int(settings["max_posts_per_user"]),
+            max_likes_per_user=int(settings["max_likes_per_user"])
+        )
 
-    for bot in user_bots:
         bot.sign_up()
         bot.create_random_posts()
         bot.like_random_posts()
