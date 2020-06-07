@@ -56,8 +56,6 @@ class UserLogin(Resource):
     def post(self):
         json_data = _user_parser.parse_args()
 
-        print(request.cookies)
-
         username = json_data.get("username")
         current_user = UserModel.find_user_by_username(username)
 
@@ -124,6 +122,18 @@ class TokenRefresh(Resource):
         })
         set_access_cookies(response, access_token)
         return response
+
+
+@jwt.user_loader_callback_loader
+def user_loader_callback(identity):
+    """User loader callback for flask-jwt-extended
+
+    :param str identity: identity from the token (user_id)
+    :returns: corresponding user object or None
+    """
+    user = UserModel.query.filter_by(username=identity).first()
+    user.save_to_db(save_time_for="request")
+    return user
 
 
 @jwt.user_loader_error_loader
