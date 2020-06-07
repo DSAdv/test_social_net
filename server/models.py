@@ -14,10 +14,13 @@ class UserModel(db.Model):
     password = db.Column(db.String(200), primary_key=False, unique=False, nullable=False)
 
     created_on = db.Column(db.DateTime, index=False, unique=False, nullable=True,
-                           default=datetime.datetime.now)
+                           default=datetime.datetime.utcnow)
 
     last_login = db.Column(db.DateTime, index=False, unique=False, nullable=True)
     last_request = db.Column(db.DateTime, index=False, unique=False, nullable=True)
+
+    liked = db.relationship("PostLike", foreign_keys="PostLike.user_id", backref="user", lazy="dynamic")
+    posts = db.relationship("Post", foreign_keys="Post.user_id", backref="author", lazy="dynamic")
 
     def __init__(self, username, password):
         self.username = username
@@ -35,10 +38,10 @@ class UserModel(db.Model):
 
     def save_to_db(self, save_time_for: str = None):
         if save_time_for is not None:
-            {
-                "login": self.last_login,
-                "request": self.last_request,
-            }[save_time_for] = datetime.datetime.now()
+            if save_time_for.lower() == "login":
+                self.last_login = datetime.datetime.utcnow()
+            elif save_time_for.lower() == "request":
+                self.last_request = datetime.datetime.utcnow()
 
         db.session.add(self)
         db.session.commit()
@@ -47,8 +50,43 @@ class UserModel(db.Model):
         db.session.delete(self)
         db.session.commit()
 
+    # posts functionality
+    def create_post(self, body):
+        post = Post(body=body, author=self)
+        db.session.add(post)
+        db.session.commit()
+
+    def like_post(self, post):
+        if not self.has_liked_post(post):
+            like = PostLike(user_id=self.id, post_id=post.id)
+            db.session.add(like)
+
+    def unlike_post(self, post):
+        if self.has_liked_post(post):
+            PostLike.query.filter_by(
+                user_id=self.id,
+                post_id=post.id).delete()
+
+    def has_liked_post(self, post):
+        return PostLike.query.filter(
+            PostLike.user_id == self.id,
+            PostLike.post_id == post.id).count() > 0
+
     def __repr__(self):
         return '<User {}>'.format(self.username)
+
+    @classmethod
+    def return_all(cls):
+        def to_json(x):
+            return {
+                "username": x.username,
+                "password": x.password,
+                "created_on": str(x.created_on),
+                "last_login": str(x.last_login),
+                "last_request": str(x.last_request),
+            }
+
+        return {'users': list(map(lambda x: to_json(x), UserModel.query.all()))}
 
     @classmethod
     def find_user_by_username(cls, username: str):
@@ -72,3 +110,19 @@ class RevokedTokenModel(db.Model):
     def is_jti_blacklisted(cls, jti):
         query = cls.query.filter_by(jti=jti).first()
         return bool(query)
+
+
+class PostLike(db.Model):
+    __tablename__ = 'post_likes'
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.datetime.utcnow)
+
+
+class Post(db.Model):
+    __tablename__ = 'posts'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.Text())
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
