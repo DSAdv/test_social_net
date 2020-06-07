@@ -14,6 +14,7 @@ flask-migrate = "*"
 flask-script = "*"
 flask-marshmallow = "*"
 marshmallow = "*"
+requests = "*"
 
 [dev-packages]
 

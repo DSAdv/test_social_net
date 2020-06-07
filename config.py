@@ -2,6 +2,8 @@ from os import environ, path
 from dotenv import load_dotenv
 
 basedir = path.abspath(path.dirname(__file__))
+bot_config_path = path.join(basedir, "bot_conf.ini")
+
 load_dotenv(path.join(basedir, '.env'))
 
 

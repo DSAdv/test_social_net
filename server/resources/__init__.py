@@ -12,7 +12,7 @@ api.add_resource(post.PostDetails, "/posts/<int:id>", "/posts/<int:id>/<string:a
 api.add_resource(analytics.LikeAnalytics, "/analytics")
 
 api.add_resource(user.UserList, "/users")
-api.add_resource(user.UserActivity, "/users/cls")
+api.add_resource(user.UserActivity, "/users/self")
 
 api.add_resource(auth.UserLogin, "/auth/login")
 api.add_resource(auth.UserRegistration, "/auth/register")
