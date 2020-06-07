@@ -33,7 +33,7 @@ class UserRegistration(Resource):
 
         user = UserModel(**json_data)
         try:
-            access_token = create_access_token(identity=json_data['username'])
+            access_token = create_access_token(identity=json_data['username'], expires_delta=False)
             refresh_token = create_refresh_token(identity=json_data['username'])
             user.save_to_db(save_time_for="login")
 
@@ -61,7 +61,7 @@ class UserLogin(Resource):
             return {"message": f"User {username} doesn't exist"}
 
         if current_user.check_password(json_data.get("password")):
-            access_token = create_access_token(identity=username)
+            access_token = create_access_token(identity=username, expires_delta=False)
             refresh_token = create_refresh_token(identity=username)
 
             response = jsonify({
@@ -135,8 +135,9 @@ def user_loader_callback(identity):
 
 
 @jwt.expired_token_loader
-def custom_expired_token_loader(identity):
-    return {"message": "Token has expired"}
+def custom_expired_token_loader(expired_token):
+    token_type = expired_token['type']
+    return {"message": f"The {token_type} token has expired"}, 401
 
 
 @jwt.user_loader_error_loader

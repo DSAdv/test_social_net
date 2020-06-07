@@ -10,7 +10,7 @@ _post_parser.add_argument(
     "body",
     type=str,
     required=True,
-    help="This field cannot be blank"
+    help="User's post text body, this field cannot be blank"
 )
 
 

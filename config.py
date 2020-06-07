@@ -24,6 +24,6 @@ class Config:
     JWT_BLACKLIST_TOKEN_CHECKS = ["access", "refresh"] # environ.get("JWT_BLACKLIST_TOKEN_CHECKS")
 
     # Flask-SQLAlchemy
-    SQLALCHEMY_DATABASE_URI = environ.get('SQLALCHEMY_DATABASE_URI')
+    SQLALCHEMY_DATABASE_URI = environ.get('SQLALCHEMY_DATABASE_URI') or f"sqlite:///f{path.join(basedir, 'test.db')}"
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False

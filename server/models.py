@@ -1,6 +1,7 @@
 import datetime
 
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import func
 from server import db
 
 
@@ -118,6 +119,11 @@ class PostLikeModel(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.datetime.utcnow)
 
+    @classmethod
+    def get_day_count(cls, date):
+        filter_date = date.date() if isinstance(date, datetime.datetime) else date
+        return len(cls.query.filter(func.date(cls.timestamp) == filter_date).all())
+
 
 class PostModel(db.Model):
     __tablename__ = 'posts'
@@ -132,4 +138,5 @@ class PostModel(db.Model):
             "body": self.body,
             "timestamp": str(self.timestamp),
             "user_id": self.user_id,
+            "like_count": len(PostLikeModel.query.filter_by(post_id=self.id).all()),
         }
