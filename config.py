@@ -11,13 +11,17 @@ class Config:
     FLASK_APP = 'wsgi.py'
     FLASK_ENV = environ.get('FLASK_ENV')
     SECRET_KEY = environ.get('SECRET_KEY')
+
     JWT_SECRET_KEY = environ.get('JWT_SECRET_KEY')
-    JWT_TOKEN_LOCATION = environ.get("JWT_TOKEN_LOCATION")
+    JWT_TOKEN_LOCATION = ("headers", "cookies") # environ.get("JWT_TOKEN_LOCATION")
     JWT_COOKIE_CSRF_PROTECT = environ.get("JWT_COOKIE_CSRF_PROTECT")
+    JWT_COOKIE_SECURE = environ.get("JWT_COOKIE_SECURE")
     JWT_CSRF_CHECK_FORM = environ.get("JWT_CSRF_CHECK_FORM")
+    # JWT_ACCESS_COOKIE_PATH = environ.get("JWT_ACCESS_COOKIE_PATH")
+    # JWT_REFRESH_COOKIE_PATH = environ.get("JWT_REFRESH_COOKIE_PATH")
 
     JWT_BLACKLIST_ENABLED = environ.get("JWT_BLACKLIST_ENABLED")
-    JWT_BLACKLIST_TOKEN_CHECKS = environ.get("JWT_BLACKLIST_TOKEN_CHECKS")
+    JWT_BLACKLIST_TOKEN_CHECKS = ["access", "refresh"] # environ.get("JWT_BLACKLIST_TOKEN_CHECKS")
 
     # Flask-SQLAlchemy
     SQLALCHEMY_DATABASE_URI = environ.get('SQLALCHEMY_DATABASE_URI')

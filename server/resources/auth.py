@@ -1,6 +1,6 @@
 import datetime
 
-from flask import jsonify, make_response
+from flask import jsonify, make_response, request
 from flask_jwt_extended import (
     create_access_token, create_refresh_token, get_jwt_identity, jwt_refresh_token_required,
     jwt_required, get_raw_jwt, set_access_cookies, set_refresh_cookies, unset_access_cookies, unset_refresh_cookies
@@ -39,11 +39,15 @@ class UserRegistration(Resource):
             refresh_token = create_refresh_token(identity=json_data['username'])
             user.save_to_db(save_time_for="login")
 
-            response = jsonify({'register': True})
+            response = jsonify({
+                "register": True,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+            })
             set_access_cookies(response, access_token)
             set_refresh_cookies(response, refresh_token)
 
-            return response, 201
+            return response
         except:
             return {"message": "Something went wrong"}, 500
 
@@ -51,6 +55,8 @@ class UserRegistration(Resource):
 class UserLogin(Resource):
     def post(self):
         json_data = _user_parser.parse_args()
+
+        print(request.cookies)
 
         username = json_data.get("username")
         current_user = UserModel.find_user_by_username(username)
@@ -62,12 +68,16 @@ class UserLogin(Resource):
             access_token = create_access_token(identity=username)
             refresh_token = create_refresh_token(identity=username)
 
-            response = jsonify({'login': True})
+            response = jsonify({
+                "login": True,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+            })
             set_access_cookies(response, access_token)
             set_refresh_cookies(response, refresh_token)
 
             current_user.save_to_db(save_time_for="login")
-            return make_response(response, 200)
+            return response
         else:
             return {"message": "Provided invalid credentials"}, 401
 
@@ -82,7 +92,7 @@ class UserLogoutAccess(Resource):
 
             response = jsonify({"logout_access": True})
             unset_access_cookies(response)
-            return make_response(response, 200)
+            return response
         except:
             return {'message': 'Something went wrong'}, 500
 
@@ -97,7 +107,7 @@ class UserLogoutRefresh(Resource):
 
             response = jsonify({"logout_refresh": True})
             unset_refresh_cookies(response)
-            return make_response(response, 200)
+            return response
         except:
             return {'message': 'Something went wrong'}, 500
 
@@ -108,19 +118,12 @@ class TokenRefresh(Resource):
         current_user = get_jwt_identity()
         access_token = create_access_token(identity=current_user, fresh=False)
 
-        response = jsonify({"refresh": True})
+        response = jsonify({
+            "refresh": True,
+            "access_token": access_token,
+        })
         set_access_cookies(response, access_token)
-        return make_response(response, 200)
-
-
-@jwt.user_loader_callback_loader
-def user_loader_callback(identity):
-    user = UserModel.find_user_by_username(username=identity)
-    if not user:
-        return None
-
-    user.save_to_db(save_time_for="request")
-    return user
+        return response
 
 
 @jwt.user_loader_error_loader
