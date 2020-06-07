@@ -1,6 +1,4 @@
-import datetime
-
-from flask import jsonify, make_response, request
+from flask import jsonify
 from flask_jwt_extended import (
     create_access_token, create_refresh_token, get_jwt_identity, jwt_refresh_token_required,
     jwt_required, get_raw_jwt, set_access_cookies, set_refresh_cookies, unset_access_cookies, unset_refresh_cookies
@@ -134,6 +132,11 @@ def user_loader_callback(identity):
     user = UserModel.query.filter_by(username=identity).first()
     user.save_to_db(save_time_for="request")
     return user
+
+
+@jwt.expired_token_loader
+def custom_expired_token_loader(identity):
+    return {"message": "Token has expired"}
 
 
 @jwt.user_loader_error_loader
